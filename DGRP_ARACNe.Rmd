@@ -1,0 +1,38 @@
+---
+title: "R Notebook"
+output:
+  html_notebook: default
+  pdf_document: default
+---
+```{r}
+source("https://bioconductor.org/biocLite.R")
+biocLite("viper")
+```
+
+```{r}
+biocLite("mixtools")
+biocLite("bcellViper")
+```
+```{r}
+library(viper)
+```
+```{r}
+setwd("C:/Users/bwillia/Desktop/Fly_ARACNe")
+load(file = "Fly_Female-tf_regulon.rda")
+dset <- fread(file ="dgrp.array.exp.female.csv")
+```
+
+```{r}
+eset <- as.matrix(dset)
+suppressWarnings(eset <- sapply(eset, as.numeric))
+```
+
+```{r}
+vpres <- viper(eset, regul, method = "scale", verbose = TRUE)
+```
+
+
+```{r}
+## require(Biobase)
+## Fexprs <- new("ExpressionSet", exprs= as.matrix(dset))
+```
