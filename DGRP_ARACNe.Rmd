@@ -14,25 +14,68 @@ biocLite("mixtools")
 biocLite("bcellViper")
 ```
 ```{r}
-library(viper)
-```
-```{r}
-setwd("C:/Users/bwillia/Desktop/Fly_ARACNe")
-load(file = "Fly_Female-tf_regulon.rda")
-dset <- fread(file ="dgrp.array.exp.female.csv")
+source("http://bioconductor.org/biocLite.R")
+biocLite(c("Biobase"))
+
 ```
 
 ```{r}
+library(viper)
+library(Biobase)
+library(data.table)
+```
+```{r}
+#etwd("C:/Users/bwillia/Desktop/Fly_ARACNe/DGRP_ARACNe")
+
+# regulon
+load(file = "Fly_Female-tf_regulon.rda")
+
+
+# expression assay data
+dsetF <- fread(file ="dgrp.array.exp.female.csv")
+dsetM <- fread(file ="dgrp.array.exp.male.csv")
+```
+
+
+requests numeric x
+```{r}
+# create ExpressionSet object
+exprs <- as.matrix(dsetF)
+ESet <- ExpressionSet(assayData= exprs)
+```
+
+
+Error in txtProgressBar(max = length(regulon), style = 3) : must have 'max' > 'min'
+```{r}
+# convert into numeric matrix
 eset <- as.matrix(dset)
 suppressWarnings(eset <- sapply(eset, as.numeric))
 ```
 
-```{r}
-vpres <- viper(eset, regul, method = "scale", verbose = TRUE)
-```
 
 
 ```{r}
-## require(Biobase)
-## Fexprs <- new("ExpressionSet", exprs= as.matrix(dset))
+
+vpres <- viper(eset, regulon = bose = TRUE)
 ```
+
+requests numeric x
+```{r}
+require(Biobase)
+Fexprs <- new("ExpressionSet", exprs= as.matrix(dset))
+```
+
+Returns numeric error, expression set is 1x1
+```{r}
+# expression data
+tmp <- read.table(file ="dgrp.array.exp.female.txt")
+m <- as.matrix(tmp)
+
+## create ExpressionSet object:
+eset <- new("ExpressionSet", exprs = m)
+```
+
+
+
+method= "mad" Error in x - median(x) : non-numeric argument to binary operator
+method= "mad" (matrix) Error in wts^2 : non-numeric argument to binary operator

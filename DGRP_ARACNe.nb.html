@@ -192,49 +192,98 @@ biocLite(&quot;bcellViper&quot;)</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeSh2aXBlcilcbmBgYCJ9 -->
-<pre class="r"><code>library(viper)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2V0d2QoXCJDOi9Vc2Vycy9id2lsbGlhL0Rlc2t0b3AvRmx5X0FSQUNOZVwiKVxubG9hZChmaWxlID0gXCJGbHlfRmVtYWxlLXRmX3JlZ3Vsb24ucmRhXCIpXG5kc2V0IDwtIGZyZWFkKGZpbGUgPVwiZGdycC5hcnJheS5leHAuZmVtYWxlLmNzdlwiKVxuYGBgIn0= -->
-<pre class="r"><code>setwd(&quot;C:/Users/bwillia/Desktop/Fly_ARACNe&quot;)
-load(file = &quot;Fly_Female-tf_regulon.rda&quot;)
-dset &lt;- fread(file =&quot;dgrp.array.exp.female.csv&quot;)</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc291cmNlKFwiaHR0cDovL2Jpb2NvbmR1Y3Rvci5vcmcvYmlvY0xpdGUuUlwiKVxuYmlvY0xpdGUoYyhcIkJpb2Jhc2VcIikpXG5cbmBgYCJ9 -->
+<pre class="r"><code>source(&quot;http://bioconductor.org/biocLite.R&quot;)
+biocLite(c(&quot;Biobase&quot;))
+</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZXNldCA8LSBhcy5tYXRyaXgoZHNldClcbnN1cHByZXNzV2FybmluZ3MoZXNldCA8LSBzYXBwbHkoZXNldCwgYXMubnVtZXJpYykpXG5gYGAifQ== -->
-<pre class="r"><code>eset &lt;- as.matrix(dset)
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeSh2aXBlcilcbmxpYnJhcnkoQmlvYmFzZSlcbmxpYnJhcnkoZGF0YS50YWJsZSlcbmBgYCJ9 -->
+<pre class="r"><code>library(viper)
+library(Biobase)
+library(data.table)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiZGF0YS50YWJsZSAxLjExLjggIExhdGVzdCBuZXdzOiByLWRhdGF0YWJsZS5jb21cblxuQXR0YWNoaW5nIHBhY2thZ2U6IOOkvOO4sWRhdGEudGFibGXjpLzjuLJcblxuVGhlIGZvbGxvd2luZyBvYmplY3QgaXMgbWFza2VkIF9ieV8g46S847ixLkdsb2JhbEVuduOkvOO4sjpcblxuICAgIC5OXG4ifQ== -->
+<pre><code>data.table 1.11.8  Latest news: r-datatable.com
+
+Attaching package: &lt;U+393C&gt;&lt;U+3E31&gt;data.table&lt;U+393C&gt;&lt;U+3E32&gt;
+
+The following object is masked _by_ &lt;U+393C&gt;&lt;U+3E31&gt;.GlobalEnv&lt;U+393C&gt;&lt;U+3E32&gt;:
+
+    .N</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI2V0d2QoXCJDOi9Vc2Vycy9id2lsbGlhL0Rlc2t0b3AvRmx5X0FSQUNOZS9ER1JQX0FSQUNOZVwiKVxuIyByZWd1bG9uXG5sb2FkKGZpbGUgPSBcIkZseV9GZW1hbGUtdGZfcmVndWxvbi5yZGFcIilcbiMgZXhwcmVzc2lvbiBhc3NheSBkYXRhXG5kc2V0RiA8LSBmcmVhZChmaWxlID1cImRncnAuYXJyYXkuZXhwLmZlbWFsZS5jc3ZcIilcbmRzZXRNIDwtIGZyZWFkKGZpbGUgPVwiZGdycC5hcnJheS5leHAubWFsZS5jc3ZcIilcbmBgYCJ9 -->
+<pre class="r"><code>#etwd(&quot;C:/Users/bwillia/Desktop/Fly_ARACNe/DGRP_ARACNe&quot;)
+# regulon
+load(file = &quot;Fly_Female-tf_regulon.rda&quot;)
+# expression assay data
+dsetF &lt;- fread(file =&quot;dgrp.array.exp.female.csv&quot;)
+dsetM &lt;- fread(file =&quot;dgrp.array.exp.male.csv&quot;)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>requests numeric x</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBjcmVhdGUgRXhwcmVzc2lvblNldCBvYmplY3RcbmV4cHJzIDwtIGFzLm1hdHJpeChkc2V0RilcbkVTZXQgPC0gRXhwcmVzc2lvblNldChhc3NheURhdGE9IGV4cHJzKVxuYGBgIn0= -->
+<pre class="r"><code># create ExpressionSet object
+exprs &lt;- as.matrix(dsetF)
+ESet &lt;- ExpressionSet(assayData= exprs)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Error in txtProgressBar(max = length(regulon), style = 3) : must have ‘max’ &gt; ‘min’</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBjb252ZXJ0IGludG8gbnVtZXJpYyBtYXRyaXhcbmVzZXQgPC0gYXMubWF0cml4KGRzZXQpXG5zdXBwcmVzc1dhcm5pbmdzKGVzZXQgPC0gc2FwcGx5KGVzZXQsIGFzLm51bWVyaWMpKVxuYGBgIn0= -->
+<pre class="r"><code># convert into numeric matrix
+eset &lt;- as.matrix(dset)
 suppressWarnings(eset &lt;- sapply(eset, as.numeric))</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxudnByZXMgPC0gdmlwZXIoZXNldCwgcmVndWwsIG1ldGhvZCA9IFwic2NhbGVcIiwgdmVyYm9zZSA9IFRSVUUpXG5gYGAifQ== -->
-<pre class="r"><code>vpres &lt;- viper(eset, regul, method = &quot;scale&quot;, verbose = TRUE)</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubG9hZChmaWxlID0gXCJGbHlfTWFsZS10Zl9yZWd1bG9uLnJkYVwiKVxudnByZXMgPC0gdmlwZXIoZXNldCwgbGlzdCByZWd1bCApLCB2ZXJib3NlID0gVFJVRSlcbmBgYCJ9 -->
+<pre class="r"><code>load(file = &quot;Fly_Male-tf_regulon.rda&quot;)
+vpres &lt;- viper(eset, list regul ), verbose = TRUE)</code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiXG5Db21wdXRpbmcgdGhlIGFzc29jaWF0aW9uIHNjb3Jlc1xuQ29tcHV0aW5nIHJlZ3Vsb25zIGVucmljaG1lbnQgd2l0aCBhUkVBXG5ubyBub24tbWlzc2luZyBhcmd1bWVudHMgdG8gbWF4OyByZXR1cm5pbmcgLUluZkVycm9yIGluIHR4dFByb2dyZXNzQmFyKG1heCA9IGxlbmd0aChyZWd1bG9uKSwgc3R5bGUgPSAzKSA6IFxuICBtdXN0IGhhdmUgJ21heCcgPiAnbWluJ1xuIn0= -->
-<pre><code>
-Computing the association scores
-Computing regulons enrichment with aREA
-no non-missing arguments to max; returning -InfError in txtProgressBar(max = length(regulon), style = 3) : 
-  must have 'max' &gt; 'min'</code></pre>
+<!-- rnb-output-begin eyJkYXRhIjoiRXJyb3I6IHVuZXhwZWN0ZWQgc3ltYm9sIGluIFwidnByZXMgPC0gdmlwZXIoZXNldCwgbGlzdCByZWd1bFwiXG4ifQ== -->
+<pre><code>Error: unexpected symbol in &quot;vpres &lt;- viper(eset, list regul&quot;</code></pre>
 <!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+<p>requests numeric x</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyMgcmVxdWlyZShCaW9iYXNlKVxuIyMgRmV4cHJzIDwtIG5ldyhcIkV4cHJlc3Npb25TZXRcIiwgZXhwcnM9IGFzLm1hdHJpeChkc2V0KSlcbmBgYCJ9 -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyMgcmVxdWlyZShCaW9iYXNlKVxuRmV4cHJzIDwtIG5ldyhcIkV4cHJlc3Npb25TZXRcIiwgZXhwcnM9IGFzLm1hdHJpeChkc2V0KSlcbmBgYCJ9 -->
 <pre class="r"><code>## require(Biobase)
-## Fexprs &lt;- new(&quot;ExpressionSet&quot;, exprs= as.matrix(dset))</code></pre>
+Fexprs &lt;- new(&quot;ExpressionSet&quot;, exprs= as.matrix(dset))</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Returns numeric error, expression set is 1x1</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBleHByZXNzaW9uIGRhdGFcbnRtcCA8LSByZWFkLnRhYmxlKGZpbGUgPVwiZGdycC5hcnJheS5leHAuZmVtYWxlLnR4dFwiKVxubSA8LSBhcy5tYXRyaXgodG1wKVxuXG4jIyBjcmVhdGUgRXhwcmVzc2lvblNldCBvYmplY3Q6XG5lc2V0IDwtIG5ldyhcIkV4cHJlc3Npb25TZXRcIiwgZXhwcnMgPSBtKVxuYGBgIn0= -->
+<pre class="r"><code># expression data
+tmp &lt;- read.table(file =&quot;dgrp.array.exp.female.txt&quot;)
+m &lt;- as.matrix(tmp)
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6DQogIGh0bWxfbm90ZWJvb2s6IGRlZmF1bHQNCiAgcGRmX2RvY3VtZW50OiBkZWZhdWx0DQotLS0NCmBgYHtyfQ0Kc291cmNlKCJodHRwczovL2Jpb2NvbmR1Y3Rvci5vcmcvYmlvY0xpdGUuUiIpDQpiaW9jTGl0ZSgidmlwZXIiKQ0KYGBgDQoNCmBgYHtyfQ0KYmlvY0xpdGUoIm1peHRvb2xzIikNCmJpb2NMaXRlKCJiY2VsbFZpcGVyIikNCmBgYA0KYGBge3J9DQpsaWJyYXJ5KHZpcGVyKQ0KYGBgDQpgYGB7cn0NCnNldHdkKCJDOi9Vc2Vycy9id2lsbGlhL0Rlc2t0b3AvRmx5X0FSQUNOZSIpDQpsb2FkKGZpbGUgPSAiRmx5X0ZlbWFsZS10Zl9yZWd1bG9uLnJkYSIpDQpkc2V0IDwtIGZyZWFkKGZpbGUgPSJkZ3JwLmFycmF5LmV4cC5mZW1hbGUuY3N2IikNCmBgYA0KDQpgYGB7cn0NCmVzZXQgPC0gYXMubWF0cml4KGRzZXQpDQpzdXBwcmVzc1dhcm5pbmdzKGVzZXQgPC0gc2FwcGx5KGVzZXQsIGFzLm51bWVyaWMpKQ0KYGBgDQoNCmBgYHtyfQ0KdnByZXMgPC0gdmlwZXIoZXNldCwgcmVndWwsIG1ldGhvZCA9ICJzY2FsZSIsIHZlcmJvc2UgPSBUUlVFKQ0KYGBgDQoNCg0KYGBge3J9DQojIyByZXF1aXJlKEJpb2Jhc2UpDQojIyBGZXhwcnMgPC0gbmV3KCJFeHByZXNzaW9uU2V0IiwgZXhwcnM9IGFzLm1hdHJpeChkc2V0KSkNCmBgYA0K</div>
+## create ExpressionSet object:
+eset &lt;- new(&quot;ExpressionSet&quot;, exprs = m)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>method= “mad” Error in x - median(x) : non-numeric argument to binary operator method= “mad” (matrix) Error in wts^2 : non-numeric argument to binary operator</p>
+<!-- rnb-text-end -->
+
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6DQogIGh0bWxfbm90ZWJvb2s6IGRlZmF1bHQNCiAgcGRmX2RvY3VtZW50OiBkZWZhdWx0DQotLS0NCmBgYHtyfQ0Kc291cmNlKCJodHRwczovL2Jpb2NvbmR1Y3Rvci5vcmcvYmlvY0xpdGUuUiIpDQpiaW9jTGl0ZSgidmlwZXIiKQ0KYGBgDQoNCmBgYHtyfQ0KYmlvY0xpdGUoIm1peHRvb2xzIikNCmJpb2NMaXRlKCJiY2VsbFZpcGVyIikNCmBgYA0KYGBge3J9DQpzb3VyY2UoImh0dHA6Ly9iaW9jb25kdWN0b3Iub3JnL2Jpb2NMaXRlLlIiKQ0KYmlvY0xpdGUoYygiQmlvYmFzZSIpKQ0KDQpgYGANCg0KYGBge3J9DQpsaWJyYXJ5KHZpcGVyKQ0KbGlicmFyeShCaW9iYXNlKQ0KbGlicmFyeShkYXRhLnRhYmxlKQ0KYGBgDQpgYGB7cn0NCiNldHdkKCJDOi9Vc2Vycy9id2lsbGlhL0Rlc2t0b3AvRmx5X0FSQUNOZS9ER1JQX0FSQUNOZSIpDQoNCiMgcmVndWxvbg0KbG9hZChmaWxlID0gIkZseV9GZW1hbGUtdGZfcmVndWxvbi5yZGEiKQ0KDQoNCiMgZXhwcmVzc2lvbiBhc3NheSBkYXRhDQpkc2V0RiA8LSBmcmVhZChmaWxlID0iZGdycC5hcnJheS5leHAuZmVtYWxlLmNzdiIpDQpkc2V0TSA8LSBmcmVhZChmaWxlID0iZGdycC5hcnJheS5leHAubWFsZS5jc3YiKQ0KYGBgDQoNCg0KcmVxdWVzdHMgbnVtZXJpYyB4DQpgYGB7cn0NCiMgY3JlYXRlIEV4cHJlc3Npb25TZXQgb2JqZWN0DQpleHBycyA8LSBhcy5tYXRyaXgoZHNldEYpDQpFU2V0IDwtIEV4cHJlc3Npb25TZXQoYXNzYXlEYXRhPSBleHBycykNCmBgYA0KDQoNCkVycm9yIGluIHR4dFByb2dyZXNzQmFyKG1heCA9IGxlbmd0aChyZWd1bG9uKSwgc3R5bGUgPSAzKSA6IG11c3QgaGF2ZSAnbWF4JyA+ICdtaW4nDQpgYGB7cn0NCiMgY29udmVydCBpbnRvIG51bWVyaWMgbWF0cml4DQplc2V0IDwtIGFzLm1hdHJpeChkc2V0KQ0Kc3VwcHJlc3NXYXJuaW5ncyhlc2V0IDwtIHNhcHBseShlc2V0LCBhcy5udW1lcmljKSkNCmBgYA0KDQoNCg0KYGBge3J9DQoNCnZwcmVzIDwtIHZpcGVyKGVzZXQsIHJlZ3Vsb24gPSBib3NlID0gVFJVRSkNCmBgYA0KDQpyZXF1ZXN0cyBudW1lcmljIHgNCmBgYHtyfQ0KcmVxdWlyZShCaW9iYXNlKQ0KRmV4cHJzIDwtIG5ldygiRXhwcmVzc2lvblNldCIsIGV4cHJzPSBhcy5tYXRyaXgoZHNldCkpDQpgYGANCg0KUmV0dXJucyBudW1lcmljIGVycm9yLCBleHByZXNzaW9uIHNldCBpcyAxeDENCmBgYHtyfQ0KIyBleHByZXNzaW9uIGRhdGENCnRtcCA8LSByZWFkLnRhYmxlKGZpbGUgPSJkZ3JwLmFycmF5LmV4cC5mZW1hbGUudHh0IikNCm0gPC0gYXMubWF0cml4KHRtcCkNCg0KIyMgY3JlYXRlIEV4cHJlc3Npb25TZXQgb2JqZWN0Og0KZXNldCA8LSBuZXcoIkV4cHJlc3Npb25TZXQiLCBleHBycyA9IG0pDQpgYGANCg0KDQoNCm1ldGhvZD0gIm1hZCIgRXJyb3IgaW4geCAtIG1lZGlhbih4KSA6IG5vbi1udW1lcmljIGFyZ3VtZW50IHRvIGJpbmFyeSBvcGVyYXRvcg0KbWV0aG9kPSAibWFkIiAobWF0cml4KSBFcnJvciBpbiB3dHNeMiA6IG5vbi1udW1lcmljIGFyZ3VtZW50IHRvIGJpbmFyeSBvcGVyYXRvcg==</div>
 
 
 
