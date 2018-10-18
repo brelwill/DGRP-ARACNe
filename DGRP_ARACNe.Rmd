@@ -15,16 +15,30 @@ pacman::p_load(viper,data.table,dplyr)
 ```{r load fly data}
 #setwd("C:/Users/bwillia/Desktop/Fly_ARACNe/DGRP_ARACNe")
 
-# regulon
-load(file = "Fly_Female-tf_regulon.rda")
 
+#load("Fly_Female-tf_regulon.rda")
+#saveRDS(regul, file = "Fly_Female-tf_regulon.RDS")
+
+female_regul <- readRDS("Fly_Female-tf_regulon.RDS")
+
+#identical(regul,female_regul)
+#rm(regul)
+
+# female_regul_pruned <- pruneRegulon(female, adaptive = TRUE) #EXPERIMENTAL
+
+#load(file = "Fly_Male-tf_regulon.rda")
+#saveRDS(regul,"Fly_Male-tf_regulon.RDS")
+male_regul <- readRDS("Fly_Male-tf_regulon.RDS")
+
+#identical(regul,male_regul)
+#rm(regul)
 
 # expression assay data
 dsetF <- fread(file ="dgrp.array.exp.female.csv")
 dsetM <- fread(file ="dgrp.array.exp.male.csv")
 ```
 
-```{r generate expressionsets from }
+```{r generate expressionsets from matrices}
 # create ExpressionSet object
 females.matrix <- as.matrix(dsetF, rownames = "gene")
 females.eset <- ExpressionSet(assayData= females.matrix)
@@ -36,12 +50,15 @@ males.eset <- ExpressionSet(assayData= males.matrix)
 
 
 ```{r run viper}
-females.viper <- viper(females.eset, regulon = regul, cores = detectCores())
+females.viper <- viper(females.eset, regulon = female_regul, cores = detectCores())
+males.viper <- viper(males.eset, regulon = male_regul, cores = detectCores())
 ```
 
 ```{r exploratory clustering}
 females_vipersimilarity <- viperSimilarity(exprs(females.viper))
 
 heatmap(as.matrix(as.dist(females_vipersimilarity)), Rowv = as.dendrogram(hclust(as.dist(females_vipersimilarity), method = "average")), symm = T) #need phenodata to look at drug effects!
-```
 
+males_vipersimilarity <- viperSimilarity(exprs(males.viper))
+heatmap(as.matrix(as.dist(males_vipersimilarity)), Rowv = as.dendrogram(hclust(as.dist(males_vipersimilarity), method = "average")), symm = T) #need phenodata to look at drug effects!
+```
