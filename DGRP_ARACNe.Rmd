@@ -4,28 +4,16 @@ output:
   html_notebook: default
   pdf_document: default
 ---
-```{r}
+```{r install and load packages}
 source("https://bioconductor.org/biocLite.R")
-biocLite("viper")
-```
 
-```{r}
-biocLite("mixtools")
-biocLite("bcellViper")
-```
-```{r}
-source("http://bioconductor.org/biocLite.R")
-biocLite(c("Biobase"))
+if(!require("pacman", character.only = TRUE)) install.packages("pacman")
+pacman::p_load(viper,data.table,dplyr)
 
 ```
 
-```{r}
-library(viper)
-library(Biobase)
-library(data.table)
-```
-```{r}
-#etwd("C:/Users/bwillia/Desktop/Fly_ARACNe/DGRP_ARACNe")
+```{r load fly data}
+#setwd("C:/Users/bwillia/Desktop/Fly_ARACNe/DGRP_ARACNe")
 
 # regulon
 load(file = "Fly_Female-tf_regulon.rda")
@@ -36,46 +24,24 @@ dsetF <- fread(file ="dgrp.array.exp.female.csv")
 dsetM <- fread(file ="dgrp.array.exp.male.csv")
 ```
 
-
-requests numeric x
-```{r}
+```{r generate expressionsets from }
 # create ExpressionSet object
-exprs <- as.matrix(dsetF)
-ESet <- ExpressionSet(assayData= exprs)
+females.matrix <- as.matrix(dsetF, rownames = "gene")
+females.eset <- ExpressionSet(assayData= females.matrix)
+
+males.matrix <- as.matrix(dsetM, rownames = "gene")
+males.eset <- ExpressionSet(assayData= males.matrix)
+
 ```
 
 
-Error in txtProgressBar(max = length(regulon), style = 3) : must have 'max' > 'min'
-```{r}
-# convert into numeric matrix
-eset <- as.matrix(dset)
-suppressWarnings(eset <- sapply(eset, as.numeric))
+```{r run viper}
+females.viper <- viper(females.eset, regulon = regul, cores = detectCores())
 ```
 
+```{r exploratory clustering}
+females_vipersimilarity <- viperSimilarity(exprs(females.viper))
 
-
-```{r}
-
-vpres <- viper(eset, regulon = bose = TRUE)
+heatmap(as.matrix(as.dist(females_vipersimilarity)), Rowv = as.dendrogram(hclust(as.dist(females_vipersimilarity), method = "average")), symm = T) #need phenodata to look at drug effects!
 ```
 
-requests numeric x
-```{r}
-require(Biobase)
-Fexprs <- new("ExpressionSet", exprs= as.matrix(dset))
-```
-
-Returns numeric error, expression set is 1x1
-```{r}
-# expression data
-tmp <- read.table(file ="dgrp.array.exp.female.txt")
-m <- as.matrix(tmp)
-
-## create ExpressionSet object:
-eset <- new("ExpressionSet", exprs = m)
-```
-
-
-
-method= "mad" Error in x - median(x) : non-numeric argument to binary operator
-method= "mad" (matrix) Error in wts^2 : non-numeric argument to binary operator
