@@ -1,3 +1,4 @@
+=======
 ---
 title: "R Notebook"
 output:
@@ -28,37 +29,166 @@ female_regul <- readRDS("Fly_Female-tf_regulon.RDS")
 
 #load(file = "Fly_Male-tf_regulon.rda")
 #saveRDS(regul,"Fly_Male-tf_regulon.RDS")
+
 male_regul <- readRDS("Fly_Male-tf_regulon.RDS")
 
 #identical(regul,male_regul)
 #rm(regul)
 
-# expression assay data
-dsetF <- fread(file ="dgrp.array.exp.female.csv")
-dsetM <- fread(file ="dgrp.array.exp.male.csv")
+# load expression assay data
+
+#dsetF <- fread(file ="dgrp.array.exp.female.csv")
+#dsetM <- fread(file ="dgrp.array.exp.male.csv")
+DGRP_array_males <- readRDS(file = "DGRP_array_males.RDS")
+
+# load phenodata
+
+#pheno <-fread(file = "pheno_resp5.csv")
+phenoDelta5 <- readRDS(file = "phenoDelta5.RDS")
+#phenoDelta5[] <- lapply(phenoDelta5, as.numeric)
+
+
 ```
+
+```{r modify RNAseq}
+rm_list <- fread(file = "rm_list.csv", header = F)
+to.remove <- as.data.frame(rm_list)
+to.remove <- rm_list$V1
+`%ni%` <- Negate(`%in%`)
+dsetM2  <- subset(dsetM,select = names(dsetM) %ni% to.remove)
+saveRDS(dsetM2, file = "DGRP_array_males.RDS")
+
+```
+
+```{r modify pheno}
+library(tibble)
+library(dplyr)
+pheno <- data.frame(pheno, row.names = 1)
+rownames(pheno) <- paste("line", rownames(pheno), sep = "_")
+
+Pheno <- as.data.frame(rownames_to_column(pheno, "Line"))
+Pheno <- Pheno[rep(1:nrow(Pheno), each = 2),]
+write.csv(Pheno, file = "pheno_5AMPH.csv")
+
+#add replicate column of 1s and 2s to pheno_5AMPH.csv
+
+Pheno <- fread(file = "pheno_5AMPH.csv", drop = "V1")
+
+Pheno <- as.data.table(Pheno)
+Pheno[, Line := paste(Line, replicate, sep = ":")]
+Pheno[, replicate := NULL]
+
+phenoDelta5 <- data.frame(Pheno, row.names = 1)
+
+saveRDS(phenoDelta5, file = "phenoDelta5.RDS")
+```
+
+```{r create metadata, link with pheno}
+metadata <- data.frame(labelDescription= "Above average response on night 1",
+ row.names= "N1_Delta5")
+
+phenoData5 <- new("AnnotatedDataFrame",
+ data=phenoDelta5, varMetadata=metadata)
+
+```
+
+
 
 ```{r generate expressionsets from matrices}
 # create ExpressionSet object
-females.matrix <- as.matrix(dsetF, rownames = "gene")
-females.eset <- ExpressionSet(assayData= females.matrix)
+#females.matrix <- as.matrix(dsetF, rownames = "gene")
+#females.eset <- ExpressionSet(assayData= females.matrix)
 
-males.matrix <- as.matrix(dsetM, rownames = "gene")
-males.eset <- ExpressionSet(assayData= males.matrix)
+males.matrix <- as.matrix(DGRP_array_males, rownames = "gene")
+all(rownames(phenoDelta5)==colnames(males.matrix)) #confirm rows and columns match
+
+
+
+
+males.eset <- ExpressionSet(assayData= males.matrix,
+                            phenoData = phenoData5)
+
 
 ```
 
-
-```{r run viper}
-females.viper <- viper(females.eset, regulon = female_regul, cores = detectCores())
-males.viper <- viper(males.eset, regulon = male_regul, cores = detectCores())
+```{r prune regulon}
+#female_pregul <- pruneRegulon(female_regul, 100)
+male_pregul <- pruneRegulon(male_regul, 100)
 ```
+
+```{r run viper as one}
+combined.viper <- viper(females.eset, regulon = female_pregul, male_pregul)
+
+```
+
+```{r run viper separately}
+#females.viper <- viper(females.eset, regulon = female_pregul, method = "scale")
+males.viper <- viper(males.eset, regulon = male_pregul, method = "scale") #run viper with ExpressionSet
+
+#dim(males.viper)
+
+tmpsig <- rowTtest(males.viper, "N1_Delta5", "TRUE", "FALSE")
+viperTtest <- data.frame(Gene = rownames(tmpsig$p.value), t = round(tmpsig$statistic, 2),
+"p-value" = signif(tmpsig$p.value, 3))[order(tmpsig$p.value)[1:10], ]
+write.csv(viperTtest, file = "viperTtest.csv")
+
+
+vpsig <- viperSignature(males.matrix, phenoDelta5, method = "mean", verbose = TRUE) # run viperSignature with 2 matrices, cant specify pheno ref group
+vpres <- viper(vpsig, male_regul, verbose = FALSE) #null model
+  
+#Cannot use ExpressionSet for viperSignature: "Error in (function (classes, fdef, mtable): unable to find an inherited method for function 'pData<-' for signature '"AnnotatedDataFrame", "character"'"
+#^^ also applies to numeric and logical
+
+```
+```{r} 
+ pos <- pData(vpres)[["N1_Delta5"]] %in% c("TRUE")
+ d1 <- exprs(males.viper)[, pos]
+ colnames(d1) <- pData(males.viper)[["N1_Delta5"]][pos]
+ dd <- dist(t(d1), method = "euclidean")
+ png(file="malesDelta5_heatmap_euclidean.png",
+  width = 100, height =  100, units = "cm", res = 400 )
+ heatmap(as.matrix(dd), Rowv = as.dendrogram(hclust(dd, method = "average")), symm = T)
+dev.off()
+```
+
+```{r msViper}
+library(viper)
+
+signature <- rowTtest(males.eset, "N1_Delta5", "TRUE", "FALSE")
+nullmodel <- ttestNull(males.eset, "N1_Delta5", "TRUE", "FALSE", per = 1000,
+ repos = TRUE, verbose = T) #requires two arguments :(
+
+bstrapsig <-  bootstrapTtest(males.eset, "N1_Delta5", "TRUE", "FALSE", verbose = FALSE)
+
+mrs <- msviper(bstrapsig, male_pregul, nullmodel, verbose = FALSE)
+summary(mrs)
+mrs <- bootstrapmsviper(mrs, "median")
+
+png(filename = "malesDelta5_msVIPERplot.png")
+plot(mrs, cex = .7)
+dev.off()
+
+
+summary(mrs)
+```
+
+
 
 ```{r exploratory clustering}
-females_vipersimilarity <- viperSimilarity(exprs(females.viper))
+#females_vipersimilarity <- viperSimilarity(exprs(females.viper))
 
-heatmap(as.matrix(as.dist(females_vipersimilarity)), Rowv = as.dendrogram(hclust(as.dist(females_vipersimilarity), method = "average")), symm = T) #need phenodata to look at drug effects!
+#need phenodata to look at drug effects!
+#png(file="heatmap.png",
+#width = 100, height =  100, units = "cm", res = 300 )
+#heatmap(as.matrix(as.dist(females_vipersimilarity)), Rowv = as.dendrogram(hclust(as.dist(females_vipersimilarity), method = "average")), symm = T)
+#dev.off()
 
-males_vipersimilarity <- viperSimilarity(exprs(males.viper))
-heatmap(as.matrix(as.dist(males_vipersimilarity)), Rowv = as.dendrogram(hclust(as.dist(males_vipersimilarity), method = "average")), symm = T) #need phenodata to look at drug effects!
+males_vipersimilarity <- viperSimilarity(exprs(males.viper)) # males.viper includes pheno data
+
+png(file="malesDelta5_heatmap_similarity.png",
+width = 100, height =  100, units = "cm", res = 300 )
+heatmap(as.matrix(as.dist(males_vipersimilarity)), Rowv = as.dendrogram(hclust(as.dist(males_vipersimilarity), method = "average")), symm = T) 
+dev.off()
+
 ```
+>>>>>>> master
