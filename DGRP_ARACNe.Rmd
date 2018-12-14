@@ -14,16 +14,10 @@ pacman::p_load(viper,data.table,dplyr)
 ```
 
 ```{r load fly data}
-#setwd("C:/Users/bwillia/Desktop/Fly_ARACNe/DGRP_ARACNe")
-
-
 #load("Fly_Female-tf_regulon.rda")
 #saveRDS(regul, file = "Fly_Female-tf_regulon.RDS")
 
 female_regul <- readRDS("Fly_Female-tf_regulon.RDS")
-
-#identical(regul,female_regul)
-#rm(regul)
 
 # female_regul_pruned <- pruneRegulon(female, adaptive = TRUE) #EXPERIMENTAL
 
@@ -32,32 +26,36 @@ female_regul <- readRDS("Fly_Female-tf_regulon.RDS")
 
 male_regul <- readRDS("Fly_Male-tf_regulon.RDS")
 
-#identical(regul,male_regul)
-#rm(regul)
 
 # load expression assay data
 
 #dsetF <- fread(file ="dgrp.array.exp.female.csv")
 #dsetM <- fread(file ="dgrp.array.exp.male.csv")
 DGRP_array_males <- readRDS(file = "DGRP_array_males.RDS")
+DGRP_array_females <- readRDS(file = "DGRP_array_females.RDS")
+
 
 # load phenodata
 
-#pheno <-fread(file = "pheno_resp5.csv")
+phenocsv <-fread(file = "phenoDelta5.csv")
 phenoDelta5 <- readRDS(file = "phenoDelta5.RDS")
-#phenoDelta5[] <- lapply(phenoDelta5, as.numeric)
-
-
 ```
 
-```{r modify RNAseq}
+```{r modify males RNAseq}
 rm_list <- fread(file = "rm_list.csv", header = F)
 to.remove <- as.data.frame(rm_list)
 to.remove <- rm_list$V1
 `%ni%` <- Negate(`%in%`)
 dsetM2  <- subset(dsetM,select = names(dsetM) %ni% to.remove)
 saveRDS(dsetM2, file = "DGRP_array_males.RDS")
-
+```
+```{r modify females RNAseq}
+rm_list <- fread(file = "rm_list.csv", header = F)
+to.remove <- as.data.frame(rm_list)
+to.remove <- rm_list$V1
+`%ni%` <- Negate(`%in%`)
+dsetF2  <- subset(dsetF,select = names(dsetF) %ni% to.remove)
+saveRDS(dsetF2, file = "DGRP_array_females.RDS")
 ```
 
 ```{r modify pheno}
@@ -92,37 +90,85 @@ phenoData5 <- new("AnnotatedDataFrame",
 
 ```
 
-
-
-```{r generate expressionsets from matrices}
-# create ExpressionSet object
-#females.matrix <- as.matrix(dsetF, rownames = "gene")
-#females.eset <- ExpressionSet(assayData= females.matrix)
-
+```{r generate male expressionset from matrix}
 males.matrix <- as.matrix(DGRP_array_males, rownames = "gene")
-all(rownames(phenoDelta5)==colnames(males.matrix)) #confirm rows and columns match
+#all(rownames(phenoDelta5)==colnames(males.matrix)) #confirm rows and columns match
 
 
+#males.eset <- ExpressionSet(assayData= males.matrix, phenoData = phenoData5)
+```
+```{r generate female expressionset from matrix}
+females.matrix <- as.matrix(DGRP_array_females, rownames = "gene")
+#all(rownames(phenoDelta5)==colnames(females.matrix)) #confirm rows and columns match
 
 
-males.eset <- ExpressionSet(assayData= males.matrix,
-                            phenoData = phenoData5)
-
-
+#females.eset <- ExpressionSet(assayData= females.matrix, phenoData = phenoData5)
 ```
 
+
+
 ```{r prune regulon}
-#female_pregul <- pruneRegulon(female_regul, 100)
+female_pregul <- pruneRegulon(female_regul, 100)
 male_pregul <- pruneRegulon(male_regul, 100)
 ```
 
-```{r run viper as one}
-combined.viper <- viper(females.eset, regulon = female_pregul, male_pregul)
+```{r create matrices of responders and nonresponders}
 
+truelist <- phenocsv[ which (phenocsv$N1_Delta5 == "TRUE")]
+truelist <- as.data.frame(truelist)
+truelist <- truelist$V1
+
+falselist <- phenocsv[ which (phenocsv$N1_Delta5 == "FALSE")]
+falselist <- as.data.frame(falselist)
+falselist <- falselist$V1
+
+# get names/column IDs of Lines in males.matrix considered responders
+responders <- subset(males.matrix, select = colnames(males.matrix) %ni% falselist)
+
+
+# get names/column IDs of Lines in males.matrix considered non-responders
+non.responders <- subset(males.matrix, select = colnames(males.matrix) %ni% truelist)
 ```
+
+```{r AMPH create signature, run msviper}
+# create NULL-model and signature with non-responders as the NULL
+
+AMPHvpsig <- viperSignature(responders, non.responders, per=1000)
+
+AMPHmrs <- msviper(AMPHvpsig$signature, male_pregul, AMPHvpsig$nullmodel)
+
+summary(AMPHmrs)
+
+plot(AMPHmrs)
+```
+
+```{r MF create signature, run msviper}
+# create NULL-model and signature with non-responders as the NULL
+
+MFvpsig <- viperSignature(males.matrix, females.matrix, per=1000)
+
+MFmrs <- msviper(MFvpsig$signature, male_pregul, MFvpsig$nullmodel)
+
+summary(MFmrs)
+
+plot(MFmrs)
+```
+STOPPING POINT 12/5
+
+
+
+
+```{r}
+png(file="heatmap.png", width = 100, height =  100, units = "cm", res = 400)
+heatmap(AMPHvpsig$nullmodel)
+dev.off()
+```
+
+
 
 ```{r run viper separately}
 #females.viper <- viper(females.eset, regulon = female_pregul, method = "scale")
+
 males.viper <- viper(males.eset, regulon = male_pregul, method = "scale") #run viper with ExpressionSet
 
 #dim(males.viper)
