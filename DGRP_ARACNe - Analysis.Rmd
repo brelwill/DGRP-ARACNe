@@ -1,0 +1,80 @@
+---
+title: "R Notebook"
+output:
+  html_notebook: default
+  pdf_document: default
+---
+
+```{r install and load packages}
+source("https://bioconductor.org/biocLite.R")
+
+if(!require("pacman", character.only = TRUE)) install.packages("pacman")
+pacman::p_load(viper, data.table, tidyverse)
+
+```
+
+```{r load expression data, aracne output, and phenotype data}
+# load expression assay data
+DGRP_array_males <- readRDS(file = "DGRP_array_males.RDS")
+DGRP_array_females <- readRDS(file = "DGRP_array_females.RDS")
+
+female_regul <- readRDS("Fly_Female-tf_regulon.RDS")
+female_regul <- pruneRegulon(female_regul, 100)
+
+male_regul <- readRDS("Fly_Male-tf_regulon.RDS")
+male_regul <- pruneRegulon(male_regul, 100)
+
+#Todo - mash these into 1
+phenocsv <- fread(file = "phenoDelta5.csv")
+phenoDelta5 <- readRDS(file = "phenoDelta5.RDS")
+
+```
+
+```{r create metadata, link with pheno}
+metadata <- data.frame(labelDescription= "Above average response on night 1",
+ row.names= "N1_Delta5")
+
+phenoData5 <- new("AnnotatedDataFrame",
+ data=phenoDelta5, varMetadata=metadata)
+```
+
+```{r generate expressionsets from matrices}
+females.matrix <- as.matrix(DGRP_array_females, rownames = "gene")
+#all(rownames(phenoDelta5)==colnames(females.matrix)) #confirm rows and columns match
+#females.eset <- ExpressionSet(assayData= females.matrix, phenoData = phenoData5)
+
+males.matrix <- as.matrix(DGRP_array_males, rownames = "gene")
+#all(rownames(phenoDelta5)==colnames(males.matrix)) #confirm rows and columns match
+#males.eset <- ExpressionSet(assayData= males.matrix, phenoData = phenoData5)
+```
+
+```{r create matrices of responders and nonresponders}
+# make named logical vector indicating above or below threshold
+responders <- set_names(phenocsv$N1_Delta5, phenocsv$V1)
+
+# subset matrix to give responders
+male_responders <- males.matrix[,names(which(responders))]
+
+# subset matrix to give nonresponders
+male_nonresponders <-  males.matrix[,names(which(!responders))]
+```
+
+```{r AMPH create signature, run msviper}
+# create NULL-model and signature with non-responders as the NULL
+AMPHvpsig <- viperSignature(male_responders, male_nonresponders, per=1000)
+
+AMPHmrs <- msviper(AMPHvpsig$signature, male_regul, AMPHvpsig$nullmodel)
+summary(AMPHmrs)
+plot(AMPHmrs)
+```
+
+```{r MF create signature, run msviper}
+# create NULL-model and signature with non-responders as the NULL
+
+MFvpsig <- viperSignature(males.matrix, females.matrix, per=1000)
+
+MFmrs <- msviper(MFvpsig$signature, male_regul, MFvpsig$nullmodel)
+
+summary(MFmrs)
+plot(MFmrs)
+```
